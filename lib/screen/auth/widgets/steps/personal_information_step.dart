@@ -1,3 +1,4 @@
+import 'package:intl_phone_field/phone_number.dart';
 import 'package:hyper_local_seller/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +21,7 @@ class PersonalInformationStep extends StatefulWidget {
   final FocusNode passwordFocusNode;
   final FocusNode confirmPasswordFocusNode;
   final Function(String code, String flag) onCountryChanged;
+  final ValueChanged<PhoneNumber>? onPhoneChanged;
   final String selectedCountryCode;
   final String selectedCountryFlag;
 
@@ -37,6 +39,7 @@ class PersonalInformationStep extends StatefulWidget {
     required this.passwordFocusNode,
     required this.confirmPasswordFocusNode,
     required this.onCountryChanged,
+    this.onPhoneChanged,
     required this.selectedCountryCode,
     required this.selectedCountryFlag,
   });
@@ -173,6 +176,10 @@ class _PersonalInformationStepState extends State<PersonalInformationStep> {
               controller: widget.mobileController,
               focusNode: widget.mobileFocusNode,
               autovalidateMode: AutovalidateMode.onUserInteraction,
+              onChanged: widget.onPhoneChanged,
+              onCountryChanged: (dialCode) {
+                widget.onCountryChanged(dialCode, widget.selectedCountryFlag);
+              },
             ),
             if (_phoneVerificationError != null) ...[
               const SizedBox(height: 4),

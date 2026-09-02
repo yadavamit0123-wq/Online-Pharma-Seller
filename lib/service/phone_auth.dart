@@ -11,18 +11,30 @@ class FirebasePhoneAuthService {
   Future<String> sendOTP({
     required String phoneNumber,
     required Function(String error) onError,
-    Function? onAutoVerify,
+    Future<void> Function(PhoneAuthCredential credential)? onAutoVerify,
   }) async {
     final completer = Completer<String>();
+    var autoVerified = false;
     try {
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-retrieval or instant verification
           debugPrint('Auto verification completed');
           if (onAutoVerify != null) {
-            onAutoVerify();
+            autoVerified = true;
+            try {
+              await onAutoVerify(credential);
+              if (!completer.isCompleted) {
+                completer.complete(_verificationId ?? 'auto_verified');
+              }
+            } catch (e) {
+              debugPrint('Auto verification handler failed: $e');
+              onError(e.toString());
+              if (!completer.isCompleted) {
+                completer.completeError(e);
+              }
+            }
           }
         },
         verificationFailed: (FirebaseAuthException e) {
@@ -44,14 +56,14 @@ class FirebasePhoneAuthService {
           debugPrint('Code sent to $phoneNumber');
           _verificationId = verificationId;
           _resendToken = resendToken;
-          if (!completer.isCompleted) {
+          if (!completer.isCompleted && !autoVerified) {
             completer.complete(verificationId);
           }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           debugPrint('Auto retrieval timeout');
           _verificationId = verificationId;
-          if (!completer.isCompleted) {
+          if (!completer.isCompleted && !autoVerified) {
             completer.complete(verificationId);
           }
         },
@@ -62,6 +74,17 @@ class FirebasePhoneAuthService {
       onError(e.toString());
       rethrow;
     }
+  }
+
+  /// Sign in with phone credential (login flow)
+  Future<UserCredential> signInWithPhoneCredential(
+    PhoneAuthCredential credential,
+  ) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null && currentUser.phoneNumber == null) {
+      return currentUser.linkWithCredential(credential);
+    }
+    return _auth.signInWithCredential(credential);
   }
 
   /// Verify OTP code
@@ -75,9 +98,7 @@ class FirebasePhoneAuthService {
         smsCode: otp,
       );
 
-      UserCredential userCredential = await _auth.signInWithCredential(
-        credential,
-      );
+      final userCredential = await signInWithPhoneCredential(credential);
       debugPrint('OTP verified successfully');
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -99,8 +120,10 @@ class FirebasePhoneAuthService {
   Future<String> resendOTP({
     required String phoneNumber,
     required Function(String error) onError,
+    Future<void> Function(PhoneAuthCredential credential)? onAutoVerify,
   }) async {
     final completer = Completer<String>();
+    var autoVerified = false;
     try {
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
@@ -108,6 +131,20 @@ class FirebasePhoneAuthService {
         forceResendingToken: _resendToken,
         verificationCompleted: (PhoneAuthCredential credential) async {
           debugPrint('Auto verification completed on resend');
+          if (onAutoVerify != null) {
+            autoVerified = true;
+            try {
+              await onAutoVerify(credential);
+              if (!completer.isCompleted) {
+                completer.complete(_verificationId ?? 'auto_verified');
+              }
+            } catch (e) {
+              onError(e.toString());
+              if (!completer.isCompleted) {
+                completer.completeError(e);
+              }
+            }
+          }
         },
         verificationFailed: (FirebaseAuthException e) {
           debugPrint('Resend verification failed: ${e.message}');
@@ -120,13 +157,13 @@ class FirebasePhoneAuthService {
           debugPrint('OTP resent to $phoneNumber');
           _verificationId = verificationId;
           _resendToken = resendToken;
-          if (!completer.isCompleted) {
+          if (!completer.isCompleted && !autoVerified) {
             completer.complete(verificationId);
           }
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
-          if (!completer.isCompleted) {
+          if (!completer.isCompleted && !autoVerified) {
             completer.complete(verificationId);
           }
         },

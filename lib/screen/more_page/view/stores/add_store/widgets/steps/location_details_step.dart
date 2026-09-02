@@ -365,17 +365,27 @@ class _LocationDetailsStepState extends State<LocationDetailsStep> {
               children: [
                 Expanded(
                   child: CustomTextField(
-                    hint: "Lat",
+                    label: l10n?.latitude ?? "Latitude",
+                    hint: "e.g. 23.241999",
+                    isRequired: true,
                     readOnly: true,
                     controller: _latController,
+                    keyboardType: TextInputType.number,
+                    validator: (value) =>
+                        ValidatorUtils.validateEmpty(context, value),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: CustomTextField(
-                    hint: "Long",
+                    label: l10n?.longitude ?? "Longitude",
+                    hint: "e.g. 69.666881",
+                    isRequired: true,
                     readOnly: true,
                     controller: _longController,
+                    keyboardType: TextInputType.number,
+                    validator: (value) =>
+                        ValidatorUtils.validateEmpty(context, value),
                   ),
                 ),
               ],

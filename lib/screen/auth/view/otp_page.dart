@@ -83,15 +83,13 @@ class _OtpPageState extends State<OtpPage> {
               message: state.error,
               isError: true,
             );
-          } else if (state is AuthSuccess || state is AuthOTPVerified) {
+          } else if (state is AuthSuccess) {
             // IMPORTANT: Refresh all data BEFORE navigating.
             MasterApiService.callNeededApisOnLogin(context);
             context.go(AppRoutes.home);
             showCustomSnackbar(
               context: context,
-              message: state is AuthSuccess
-                  ? state.message
-                  : "Login Successful",
+              message: state.message,
             );
           } else if (state is AuthOTPSent) {
             // OTP resent successfully

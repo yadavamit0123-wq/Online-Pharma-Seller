@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hyper_local_seller/config/hive_storage.dart';
 import 'package:hyper_local_seller/screen/auth/bloc/auth/auth_event.dart';
@@ -27,7 +28,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await authRepository.login(email: event.email, password: event.password);
-      // Fetch and store user profile after successful login
       await ProfileBloc.fetchAndStoreProfile();
       emit(const AuthSuccess(message: "Login Successful"));
     } catch (e) {
@@ -59,8 +59,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         nationalIdCardPath: event.nationalIdCardPath,
         authorizedSignaturePath: event.authorizedSignaturePath,
       );
-      final message = (response is Map && response.containsKey('message')) 
-          ? response['message'].toString() 
+      final message = (response is Map && response.containsKey('message'))
+          ? response['message'].toString()
           : "Account Created Successfully";
       emit(AuthSuccess(message: message));
     } catch (e) {
@@ -83,6 +83,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  Future<void> _completePhoneLogin(Emitter<AuthState> emit) async {
+    final idToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (idToken == null) {
+      emit(const AuthFailure("Failed to get ID token from Firebase"));
+      return;
+    }
+
+    await authRepository.phoneCallback(idToken: idToken);
+    await ProfileBloc.fetchAndStoreProfile();
+    emit(const AuthSuccess(message: "Login Successful"));
+  }
+
+  Future<void> _handleAutoVerifiedCredential(
+    PhoneAuthCredential credential,
+    Emitter<AuthState> emit,
+  ) async {
+    await phoneAuthService.signInWithPhoneCredential(credential);
+    await _completePhoneLogin(emit);
+  }
+
   Future<void> _onPhoneSendOTPRequested(
     AuthPhoneSendOTPRequested event,
     Emitter<AuthState> emit,
@@ -90,42 +110,54 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       if (HiveStorage.isCustomSms) {
-        final response = await authRepository.customSendOtp(phone: event.phoneNumber);
+        final response =
+            await authRepository.customSendOtp(phone: event.phoneNumber);
         if (response['success'] == true) {
-           if (!emit.isDone) {
-             emit(AuthOTPSent(
-               verificationId: "customSms",
-               phoneNumber: event.phoneNumber,
-             ));
-           }
+          if (!emit.isDone) {
+            emit(AuthOTPSent(
+              verificationId: "customSms",
+              phoneNumber: event.phoneNumber,
+            ));
+          }
         } else {
-           if (!emit.isDone) {
-             emit(AuthFailure(response['message']?.toString() ?? "Failed to send OTP"));
-           }
+          if (!emit.isDone) {
+            emit(AuthFailure(
+              response['message']?.toString() ?? "Failed to send OTP",
+            ));
+          }
         }
         return;
       }
 
+      var autoVerified = false;
+      String? verificationError;
+
       final verificationId = await phoneAuthService.sendOTP(
         phoneNumber: event.phoneNumber,
         onError: (error) {
-          if (!emit.isDone) {
-            emit(AuthFailure(error));
-          }
+          verificationError = error;
         },
-        onAutoVerify: () {
+        onAutoVerify: (credential) async {
+          autoVerified = true;
           if (!emit.isDone) {
-            emit(const AuthOTPVerified(message: "Auto verified successfully"));
+            await _handleAutoVerifiedCredential(credential, emit);
           }
         },
       );
 
-      if (!emit.isDone) {
-        emit(AuthOTPSent(
-          verificationId: verificationId,
-          phoneNumber: event.phoneNumber,
-        ));
+      if (verificationError != null && !autoVerified) {
+        emit(AuthFailure(verificationError!));
+        return;
       }
+
+      if (autoVerified || emit.isDone) {
+        return;
+      }
+
+      emit(AuthOTPSent(
+        verificationId: verificationId,
+        phoneNumber: event.phoneNumber,
+      ));
     } catch (e) {
       emit(AuthFailure(e.toString().replaceAll("Exception:", "").trim()));
     }
@@ -138,17 +170,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       if (HiveStorage.isCustomSms) {
-         final response = await authRepository.customVerifyOtp(
-            phone: event.phoneNumber ?? "",
-            otp: event.otp,
-         );
-         if (response['success'] == true) {
-            await ProfileBloc.fetchAndStoreProfile();
-            emit(const AuthSuccess(message: "Login Successful"));
-         } else {
-            emit(AuthFailure(response['message']?.toString() ?? "OTP verification failed"));
-         }
-         return;
+        final response = await authRepository.customVerifyOtp(
+          phone: event.phoneNumber ?? "",
+          otp: event.otp,
+        );
+        if (response['success'] == true) {
+          await ProfileBloc.fetchAndStoreProfile();
+          emit(const AuthSuccess(message: "Login Successful"));
+        } else {
+          emit(AuthFailure(
+            response['message']?.toString() ?? "OTP verification failed",
+          ));
+        }
+        return;
       }
 
       final userCredential = await phoneAuthService.verifyOTP(
@@ -157,19 +191,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (userCredential.user != null) {
-        // Get the ID Token from Firebase User
-        final idToken = await userCredential.user!.getIdToken();
-        
-        if (idToken != null) {
-          // Call backend callback with this token
-          await authRepository.phoneCallback(idToken: idToken);
-          
-          // After successful backend callback, fetch and store profile
-          await ProfileBloc.fetchAndStoreProfile();
-          emit(const AuthSuccess(message: "Login Successful"));
-        } else {
-          emit(const AuthFailure("Failed to get ID token from Firebase"));
-        }
+        await _completePhoneLogin(emit);
       } else {
         emit(const AuthFailure("OTP verification failed"));
       }

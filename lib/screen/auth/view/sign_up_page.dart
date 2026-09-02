@@ -47,6 +47,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   String _selectedCountryCode = '+91';
   String _selectedCountryFlag = '🇮🇳';
+  String _completePhoneNumber = '';
 
   // Paths for Step 2
   String? _businessLicensePath;
@@ -223,6 +224,11 @@ class _SignUpPageState extends State<SignUpPage> {
               _selectedCountryFlag = flag;
             });
           },
+          onPhoneChanged: (phone) {
+            setState(() {
+              _completePhoneNumber = phone.completeNumber;
+            });
+          },
         );
       case 2:
         return RequiredDocumentsStep(
@@ -352,11 +358,21 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   void _submitSignUp() {
+    final phone = _completePhoneNumber.trim();
+    if (phone.isEmpty) {
+      showCustomSnackbar(
+        context: context,
+        message: 'Please enter a valid mobile number',
+        isError: true,
+      );
+      return;
+    }
+
     context.read<AuthBloc>().add(
       AuthSignUpRequested(
         name: _nameController.text,
         email: _emailController.text,
-        phone: '$_selectedCountryCode${_mobileController.text}',
+        phone: phone,
         password: _passwordController.text,
         address: _addressController.text,
         city: _cityController.text,
