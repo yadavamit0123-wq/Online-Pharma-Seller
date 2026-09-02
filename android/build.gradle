@@ -1,13 +1,3 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.google.gms:google-services:4.4.2'
-    }
-}
-
 allprojects {
     repositories {
         google()
@@ -15,7 +5,6 @@ allprojects {
     }
 }
 
-// Move all build outputs to a single top-level build directory
 rootProject.buildDir = "../build"
 
 subprojects {

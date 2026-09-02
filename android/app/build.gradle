@@ -1,11 +1,10 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
     id("com.google.gms.google-services")
+    id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
-
 
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file("local.properties")
@@ -37,19 +36,17 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
         coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
         applicationId = "com.pt.onlinepharmaseller"
-        // You can update the following values to match your application needs.
-        // For more_page information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
@@ -67,20 +64,30 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false  // Disable R8
+            minifyEnabled false
             shrinkResources false
             signingConfig = signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
-    // Ensure native libraries are uncompressed and 16 KiB page-aligned (required for 16 KB devices)
     packaging {
         resources {
             excludes += ['META-INF/DEPENDENCIES']
         }
         jniLibs {
             useLegacyPackaging = false
+        }
+    }
+}
+
+// AGP 8.x + google-services: AAB needs Google Services before deep-link extraction.
+afterEvaluate {
+    ["Debug", "Release"].each { variant ->
+        def extractTask = tasks.findByName("extractDeepLinks${variant}")
+        def googleServicesTask = tasks.findByName("process${variant}GoogleServices")
+        if (extractTask != null && googleServicesTask != null) {
+            extractTask.dependsOn(googleServicesTask)
         }
     }
 }
@@ -93,7 +100,6 @@ configurations.all {
     resolutionStrategy {
         force 'com.google.errorprone:error_prone_annotations:2.7.1'
         force 'androidx.core:core-ktx:1.6.0'
-
     }
 }
 
