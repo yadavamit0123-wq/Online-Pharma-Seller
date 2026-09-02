@@ -1,9 +1,9 @@
 class AppConstants {
   // Api related variables
 
-  static String domainUrl = 'YOUR_BASE_URL';
+  static String domainUrl = 'https://admin.onlinepharma.co.in';
 
-  static String appName = 'YOUR_APP_NAME';
+  static String appName = 'Online Pharma Seller';
 
   static String fontFamily = 'Inter';
 }

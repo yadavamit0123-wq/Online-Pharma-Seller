@@ -37,9 +37,9 @@
     </queries>
 
     <application
-        android:label="YOUR_APP_NAME"
+        android:label="Online Pharma Seller"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -61,12 +61,12 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep linking for seller-hyperlocal scheme -->
+            <!-- Deep linking for Online Pharma Seller -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="YOUR_SCHEMA" />
+                <data android:scheme="onlinepharmaseller" />
             </intent-filter>
             <intent-filter>
                 <action android:name="FLUTTER_NOTIFICATION_CLICK" />
@@ -88,7 +88,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_ANDROID_MAP_KEY"/>
+            android:value="AIzaSyA_usa-2matJnaEuxFvNag8qhXL51w4vJM"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -59,6 +59,7 @@ import 'package:hyper_local_seller/screen/products_page/add_products/bloc/select
 import 'package:hyper_local_seller/screen/products_page/add_products/bloc/selected_categories/category_expansion_cubit.dart';
 import 'l10n/app_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hyper_local_seller/firebase_options.dart';
 import 'package:hyper_local_seller/service/notification_service.dart';
 import 'package:hyper_local_seller/bloc/store_switcher/store_switcher_cubit.dart';
 import 'package:hyper_local_seller/screen/more_page/view/stores/add_store/bloc/add_store_bloc.dart';
@@ -121,7 +122,9 @@ void main() async {
   // Must be registered BEFORE Firebase.initializeApp()
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   await Hive.initFlutter();
   await HiveStorage.initPrefs();

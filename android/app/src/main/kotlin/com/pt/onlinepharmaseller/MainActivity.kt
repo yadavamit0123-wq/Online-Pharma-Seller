@@ -1,4 +1,4 @@
-package com.hyperLocal.seller
+package com.pt.onlinepharmaseller
 
 import io.flutter.embedding.android.FlutterActivity
 
