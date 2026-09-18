@@ -88,12 +88,12 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.2
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: "ic_launcher"
   ios: true
   remove_alpha_ios: true
   image_path: "assets/images/app_launcher_logo/launcher_icon.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#1e3a5f"
+  adaptive_icon_background: "#fafaff"
   adaptive_icon_foreground: "assets/images/app_launcher_logo/launcher_icon.png"
 
 # For information on the generic Dart part of this file, see the

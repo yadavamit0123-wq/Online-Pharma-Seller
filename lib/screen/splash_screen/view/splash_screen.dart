@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hyper_local_seller/bloc/settings/settings_cubit.dart';
-import 'package:hyper_local_seller/config/colors.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hyper_local_seller/config/hive_storage.dart';
 import 'package:hyper_local_seller/router/app_routes.dart';
@@ -129,27 +127,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.tertiary,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          SvgPicture.asset(
-            ImagesPath.doodle,
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              AppColors.primaryColor.withValues(alpha:0.75),
-              BlendMode.srcATop,
-            ),
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Image.asset(
+            ImagesPath.splashLogo,
+            width: 320,
+            height: 160,
+            fit: BoxFit.contain,
           ),
-          Center(
-            child: Image.asset(
-              ImagesPath.darkLogo,
-              width: 300,
-              height: 300,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

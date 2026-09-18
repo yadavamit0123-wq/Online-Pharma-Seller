@@ -3,6 +3,7 @@ class ImagesPath {
   static const String pngMainPath = 'assets/images/png';
   static const String lightLogo = '$pngMainPath/app-logo-light.png';
   static const String darkLogo = '$pngMainPath/app-logo-dark.png';
+  static const String splashLogo = '$pngMainPath/splash_logo.png';
   static const String splashBgPng = '$pngMainPath/doodle.png';
   static const String sellerLogoPng = '$pngMainPath/seller_logo.png';
 
